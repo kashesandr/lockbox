@@ -10,7 +10,8 @@
     "watch": "gulp watch",
     "build": "gulp build",
     "coverage": "gulp coverage",
-    "espruino": "node ./node_modules/.bin/espruino"
+    "espruino": "node ./node_modules/.bin/espruino",
+    "start": "gulp build && npm run espruino ./dist/main.js && npm run espruino --watch"
   },
   "repository": {
     "type": "git",
