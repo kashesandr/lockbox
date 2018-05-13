@@ -2,7 +2,7 @@
   "name": "lockbox",
   "version": "0.0.1",
   "description": "Software for magic box.",
-  "main": "dist/lockbox.js",
+  "main": "dist/main.js",
   "scripts": {
     "test": "gulp",
     "lint": "gulp lint",
@@ -54,8 +54,8 @@
     "webpack-stream": "3.2.0"
   },
   "babelBoilerplateOptions": {
-    "entryFileName": "lockbox.js",
-    "mainVarName": "lockbox"
+    "entryFileName": "main.js",
+    "mainVarName": "main"
   },
   "dependencies": {}
 }
