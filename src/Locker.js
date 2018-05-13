@@ -40,7 +40,7 @@ const Locker = class {
 
     }
 
-    setWatch(btnClick, pin, { repeat: true, edge: "rising" });
+    setWatch(btnClick, pin, { repeat: true, edge: "falling", debounce: 20 });
 
     return pin;
 

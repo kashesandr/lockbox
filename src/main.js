@@ -19,3 +19,7 @@ locker.on('code-detected', (code) => {
     authenticated ? 0 : 1, 1000
   );
 });
+
+locker.on('set-new-code', ()=>{
+
+});

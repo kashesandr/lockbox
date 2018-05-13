@@ -76,6 +76,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  var authenticated = auth.verifyCode(code);
 	  locker.servo.move(authenticated ? 0 : 1, 1000);
 	});
+	
+	locker.on('set-new-code', function () {});
 
 /***/ },
 /* 1 */
@@ -138,7 +140,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	      }
 	
-	      setWatch(btnClick, pin, { repeat: true, edge: "rising" });
+	      setWatch(btnClick, pin, { repeat: true, edge: "falling", debounce: 20 });
 	
 	      return pin;
 	    }
