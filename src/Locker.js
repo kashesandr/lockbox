@@ -1,41 +1,61 @@
+import {debounce} from "./Utils";
+import {Servo} from "./Devices";
+
 const Locker = class {
 
-  constructor() {
-    this._locked = false;
-    this.code = []; // storing key code, an array of timestamps
-    this.fluctuation = 0.1;
+  constructor(options){
+
+    this.events = {};
+
+    ({servoPin, buttonPin} = options);
+    this.servo = this.setupServo(servoPin);
+    this.button = this.setupButton(buttonPin);
+
   }
 
-  setCode(code){
-    if (!code) return;
-    if (!(code instanceof Array)) return;
-    this.code = code;
+  setupButton(pin){
+
+    let isFirstPress = false;
+    let firstPressTimestamp = null;
+    let signalTimestamps = [];
+    let detection = () => {
+      isFirstPress = true;
+      let cb = this.events['code-detected'] || (()=>{});
+      cb(signalTimestamps);
+      signalTimestamps = [];
+    };
+    let detectionDebounced = debounce(detection, 2000);
+
+    function btnClick() {
+
+      if (isFirstPress) {
+        firstPressTimestamp = new Date();
+        isFirstPress = false;
+      } else {
+        let timestamp = new Date();
+        let deltaTime = timestamp - firstPressTimestamp;
+        detectionDebounced();
+        signalTimestamps.push(deltaTime);
+      }
+
+    }
+
+    setWatch(btnClick, pin, { repeat: true, edge: "rising" });
+
+    return pin;
+
   }
-  getCode(){
-    return this.code;
+
+  setupServo(pin){
+    let servo = new Servo(pin);
+    return servo;
+    // servo.move(1, 3000); // move to position 0.5 over 3 seconds
   }
 
-  verifyCode(code){
-    if (!code) return false;
-    if (!(code instanceof Array)) return false;
-    if (code.length !== this.code.length) return false;
-
-    const [signalEnd] = code.slice(-1);
-    const [codeEnd] = this.code.slice(-1);
-
-    let coeff = signalEnd/codeEnd;
-    let result = true;
-    let fluctuation = this.fluctuation;
-    this.code.forEach( (codeItem, index) => {
-      let stamp = code[index]/coeff;
-      let withinRange = ((stamp + fluctuation) >= codeItem && (stamp - fluctuation) <= codeItem);
-      if (!withinRange)
-        result = false;
-    } );
-
-    return result;
+  on(eventName, callback){
+    this.events[eventName] = callback;
   }
 
 };
 
-export default Locker;
+export { Locker };

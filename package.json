@@ -57,5 +57,7 @@
     "entryFileName": "main.js",
     "mainVarName": "main"
   },
-  "dependencies": {}
+  "dependencies": {
+    "espruino-docs": "git@github.com:kashesandr/EspruinoDocs.git#master"
+  }
 }

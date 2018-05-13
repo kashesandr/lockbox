@@ -1,62 +1,62 @@
-import Locker from '../../src/Locker';
+import { Auth } from '../../src/Auth';
 
-describe('Locker', () => {
+describe('Auth', () => {
 
-  let locker = null;
+  let auth = null;
   beforeEach(()=>{
-    locker = new Locker();
+    auth = new Auth();
   });
   afterEach(()=>{
-    locker = null;
+    auth = null;
   });
 
   it('class should exist', () => {
-    return expect(Locker).to.exist;
+    return expect(Auth).to.exist;
   });
 
   it('can be initialized', () => {
-    let locker = new Locker();
-    return expect(locker).to.exist;
+    let auth = new Auth();
+    return expect(auth).to.exist;
   });
 
   describe('when just initialized', () => {
 
     it('should have empty code', ()=>{
-      expect(locker.code).to.deep.equal([]);
+      expect(auth.code).to.deep.equal([]);
     });
 
     it('should have set up fluctuation', ()=>{
-      expect(locker.fluctuation).to.equal(0.1);
+      expect(auth.fluctuation).to.equal(0.1);
     });
 
   });
 
   it('can set/get code', ()=>{
-    expect(locker.setCode).to.exist;
+    expect(auth.setCode).to.exist;
 
-    locker.setCode();
-    expect(locker.getCode()).to.deep.equal([]);
+    auth.setCode();
+    expect(auth.getCode()).to.deep.equal([]);
 
-    locker.setCode(1);
-    expect(locker.getCode()).to.deep.equal([]);
+    auth.setCode(1);
+    expect(auth.getCode()).to.deep.equal([]);
 
-    locker.setCode([1,2,3]);
-    expect(locker.getCode()).to.deep.equal([1,2,3]);
+    auth.setCode([1,2,3]);
+    expect(auth.getCode()).to.deep.equal([1,2,3]);
   });
 
   it('can verify code with existing', ()=>{
-    expect(locker.verifyCode).to.exist;
+    expect(auth.verifyCode).to.exist;
 
-    locker.setCode([1,2,3]);
-    expect(locker.verifyCode([1,2,3])).to.equal(true, 'same code');
+    auth.setCode([1,2,3]);
+    expect(auth.verifyCode([1,2,3])).to.equal(true, 'same code');
 
-    expect(locker.verifyCode([1,2])).to.equal(false, 'less length');
+    expect(auth.verifyCode([1,2])).to.equal(false, 'less length');
 
-    expect(locker.verifyCode([2,4,6])).to.equal(true, 'same code but 2 times slower');
+    expect(auth.verifyCode([2,4,6])).to.equal(true, 'same code but 2 times slower');
 
     let fluctuation = 0.1;
-    expect(locker.verifyCode([2+fluctuation,4+fluctuation,6+fluctuation])).to.be.true;
-    expect(locker.verifyCode([2-fluctuation,4-fluctuation,6-fluctuation])).to.be.true;
+    expect(auth.verifyCode([2+fluctuation,4+fluctuation,6+fluctuation])).to.be.true;
+    expect(auth.verifyCode([2-fluctuation,4-fluctuation,6-fluctuation])).to.be.true;
   });
 
   xit('', ()=>{  });
