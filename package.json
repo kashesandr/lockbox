@@ -11,7 +11,7 @@
     "build": "gulp build",
     "coverage": "gulp coverage",
     "espruino": "node ./node_modules/.bin/espruino",
-    "start": "gulp build && npm run espruino ./dist/main.js && npm run espruino --watch"
+    "start": "gulp build && espruino ./dist/main.min.js --watch"
   },
   "repository": {
     "type": "git",
@@ -32,7 +32,7 @@
     "babel-register": "6.14.0",
     "chai": "3.5.0",
     "del": "2.2.2",
-    "espruino": "^0.1.6",
+    "espruino": "^0.1.9",
     "glob": "7.0.6",
     "gulp": "3.9.1",
     "gulp-eslint": "3.0.1",

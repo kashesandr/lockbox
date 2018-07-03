@@ -58,26 +58,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _Locker = __webpack_require__(1);
 	
-	var _Auth = __webpack_require__(4);
+	var _Auth = __webpack_require__(6);
 	
-	var locker = new _Locker.Locker({
-	  buttonPin: BTN1,
-	  servoPin: P3
-	});
+	var _logger = __webpack_require__(4);
 	
+	var _settings = __webpack_require__(5);
+	
+	_logger.logger.log('main.js');
+	
+	var locker = new _Locker.Locker(_settings.settings.pin);
 	var auth = new _Auth.Auth();
 	
 	// TODO: set the code manually
 	var DEFAULT_CODE = [189.81586904765, 380.28420238092, 591.84163095231, 1036.09701785712, 1266.62794642860, 1892.38363095244, 2117.92424404760];
 	auth.setCode(DEFAULT_CODE);
-	auth.fluctuation = 200;
+	
+	var isReadyToSetUpNewCode = false;
 	
 	locker.on('code-detected', function (code) {
-	  var authenticated = auth.verifyCode(code);
-	  locker.servo.move(authenticated ? 0 : 1, 1000);
+	
+	  _logger.logger.log('code-detected', code);
+	
+	  if (isReadyToSetUpNewCode) {
+	    auth.setCode(code);
+	    _logger.logger.log('new code has been set');
+	    isReadyToSetUpNewCode = false;
+	  } else {
+	    var authenticated = auth.verifyCode(code);
+	    _logger.logger.log('authenticated', authenticated);
+	    locker.servo.move(authenticated ? 0 : 1);
+	  }
 	});
 	
-	locker.on('set-new-code', function () {});
+	locker.on('set-new-code', function () {
+	  _logger.logger.log('ready to set up new code');
+	  isReadyToSetUpNewCode = true;
+	});
 
 /***/ },
 /* 1 */
@@ -96,7 +112,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _Devices = __webpack_require__(3);
 	
+	var _logger = __webpack_require__(4);
+	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	_logger.logger.log('Locker.js');
 	
 	var Locker = function () {
 	  function Locker(options) {
@@ -106,9 +126,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    servoPin = options.servoPin;
 	    buttonPin = options.buttonPin;
+	    bluetoothSerial = options.bluetoothSerial;
+	
 	
 	    this.servo = this.setupServo(servoPin);
 	    this.button = this.setupButton(buttonPin);
+	    this.bluetooth = this.setupBluetooth(bluetoothSerial);
 	  }
 	
 	  _createClass(Locker, [{
@@ -116,31 +139,38 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function setupButton(pin) {
 	      var _this = this;
 	
+	      _logger.logger.log("setupButton");
+	
 	      var isFirstPress = false;
 	      var firstPressTimestamp = null;
 	      var signalTimestamps = [];
 	      var detection = function detection() {
+	        _logger.logger.log("setupButton detection");
 	        isFirstPress = true;
 	        var cb = _this.events['code-detected'] || function () {};
 	        cb(signalTimestamps);
 	        signalTimestamps = [];
+	        firstPressTimestamp = null;
 	      };
 	      var detectionDebounced = (0, _Utils.debounce)(detection, 2000);
 	
-	      function btnClick() {
+	      function btnClick(e) {
+	
+	        _logger.logger.log("setupButton btnClick");
 	
 	        if (isFirstPress) {
-	          firstPressTimestamp = new Date();
+	          firstPressTimestamp = new Date().getTime();
 	          isFirstPress = false;
 	        } else {
-	          var timestamp = new Date();
+	          var timestamp = new Date().getTime();
 	          var deltaTime = timestamp - firstPressTimestamp;
-	          detectionDebounced();
 	          signalTimestamps.push(deltaTime);
+	          detectionDebounced();
 	        }
 	      }
 	
-	      setWatch(btnClick, pin, { repeat: true, edge: "falling", debounce: 20 });
+	      // TODO: setWatch doesn't work after reloading
+	      setWatch(btnClick, pin, { repeat: true, debounce: 20, edge: 'rising' });
 	
 	      return pin;
 	    }
@@ -149,7 +179,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function setupServo(pin) {
 	      var servo = new _Devices.Servo(pin);
 	      return servo;
-	      // servo.move(1, 3000); // move to position 0.5 over 3 seconds
+	    }
+	  }, {
+	    key: "setupBluetooth",
+	    value: function setupBluetooth(serial) {
+	      var _this2 = this;
+	
+	      serial.setup(9600);
+	
+	      var receivedDataArray = [];
+	      var finishDebounced = (0, _Utils.debounce)(function () {
+	        _this2.events['bluetooth-data-received'](receivedDataArray.join(""));
+	        receivedDataArray = [];
+	      }, 100);
+	
+	      serial.on('data', function (data) {
+	        receivedDataArray.push(data);
+	        finishDebounced();
+	      });
+	
+	      this.on('bluetooth-data-received', function (data) {
+	
+	        if (data === "set") {
+	          _this2.events['set-new-code']();
+	        }
+	      });
 	    }
 	  }, {
 	    key: "on",
@@ -192,36 +246,39 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 3 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 	
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	exports.Servo = undefined;
 	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /*
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       Servo motor utility module
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       example:
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       ```
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         import { Servo } from "./Devices";
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         let servo = new Servo(P3);
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         s.move(1); // moving to position 1 over 1 second
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         s.move(0); // moving to position 0 over 1 second
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         s.move(0.5, 3000); // moving to position 0.5 over 3 seconds
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         // moving to position 0 over 1 second, then move to position 1
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         s.move(0, 1000, function() {
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           s.move(1, 1000);
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         });
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       ```
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     */
+	
+	var _logger = __webpack_require__(4);
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	/*
-	  Servo motor utility module
-	  example:
-	
-	  ```
-	    import { Servo } from "./Devices";
-	    let servo = new Servo(P3);
-	
-	    s.move(1); // moving to position 1 over 1 second
-	    s.move(0); // moving to position 0 over 1 second
-	    s.move(0.5, 3000); // moving to position 0.5 over 3 seconds
-	
-	    // moving to position 0 over 1 second, then move to position 1
-	    s.move(0, 1000, function() {
-	      s.move(1, 1000);
-	    });
-	  ```
-	*/
+	_logger.logger.log('Devices.js');
 	
 	var DEFAULT_DURATION = 1000;
 	var DEFAULT_INTERVAL = 20;
@@ -277,6 +334,48 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.logger = undefined;
+	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	var _settings = __webpack_require__(5);
+	
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	var Logger = function () {
+	  function Logger(bluetoothSerial) {
+	    _classCallCheck(this, Logger);
+	
+	    this.bluetoothSerial = bluetoothSerial;
+	  }
+	
+	  _createClass(Logger, [{
+	    key: 'log',
+	    value: function log(message, arg) {
+	      // let txt = `${message}: ${arg}`;
+	      // if (console && console.log)
+	      //   console.log(txt);
+	      // if (this.bluetoothSerial)
+	      //   this.bluetoothSerial.print(txt);
+	    }
+	  }]);
+	
+	  return Logger;
+	}();
+	
+	var logger = new Logger(_settings.settings.pin.bluetoothSerial);
+	
+	exports.logger = logger;
+
+/***/ },
+/* 5 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -284,19 +383,43 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	var settings = {
+	  pin: {
+	    buttonPin: BTN1,
+	    servoPin: P3,
+	    bluetoothSerial: Serial3
+	  }
+	};
+	
+	exports.settings = settings;
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.Auth = undefined;
 	
 	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
+	var _logger = __webpack_require__(4);
+	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	
+	_logger.logger.log('Auth.js');
 	
 	var Auth = function () {
 	  function Auth() {
 	    _classCallCheck(this, Auth);
 	
 	    this.code = []; // storing key code, an array of timestamps
-	    this.fluctuation = 0.1;
+	    this.fluctuation = 150;
 	  }
 	
 	  _createClass(Auth, [{

@@ -17,6 +17,10 @@
   ```
 */
 
+import { logger } from "./logger";
+
+logger.log('Devices.js');
+
 const DEFAULT_DURATION = 1000;
 const DEFAULT_INTERVAL = 20;
 const Servo = class {

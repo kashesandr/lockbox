@@ -26,7 +26,7 @@ describe('Auth', () => {
     });
 
     it('should have set up fluctuation', ()=>{
-      expect(auth.fluctuation).to.equal(0.1);
+      expect(auth.fluctuation).to.equal(150);
     });
 
   });

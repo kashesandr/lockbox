@@ -1,8 +1,12 @@
+import {logger} from "./logger";
+
+logger.log('Auth.js');
+
 const Auth = class {
 
   constructor() {
     this.code = []; // storing key code, an array of timestamps
-    this.fluctuation = 0.1;
+    this.fluctuation = 150; // TODO: must be in percents
   }
 
   setCode(code){

@@ -6,6 +6,7 @@ const path = require('path');
 const isparta = require('isparta');
 const webpack = require('webpack');
 const webpackStream = require('webpack-stream');
+const esp = require('espruino');
 
 const Instrumenter = isparta.Instrumenter;
 const mochaGlobals = require('./test/setup/.globals');
@@ -200,3 +201,23 @@ gulp.task('watch', watch);
 
 // An alias of test
 gulp.task('default', ['test']);
+
+
+gulp.task('deploy', function () {
+
+  // esp.expr('/dev/cu.usbmodem1411', 'E.getTemperature()', function(temp) {
+  //   console.log('Current temperature is '+temp);
+  // });
+
+  // TODO: move to settings or detect automatically
+  let port = "/dev/cu.usbmodem1411";
+  let filename = __dirname + '/dist/main.min.js';
+
+  esp.init(function() {
+    Espruino.Config.SAVE_ON_SEND = true;
+    esp.sendFile(port, filename, function (a, b) {
+      console.log(`uploaded ${filename} to ${port}`)
+    });
+  });
+
+});
