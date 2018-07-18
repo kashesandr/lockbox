@@ -35,4 +35,7 @@ const Logger = class {
 
 let logger = new Logger(settings.pin.bluetoothSerial);
 
+// TODO: enable when debugging
+//logger.enabled(true);
+
 export { logger };

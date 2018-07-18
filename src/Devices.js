@@ -142,6 +142,7 @@ const Bluetooth = class {
     serial.setup(rate);
 
     this.receivedDataArray = [];
+    this.onDataReceivedCallback = (() => {});
 
     this.onDataReceivedDebounced =
       debounce( () => { this._onDataReceived() }, debouceTimeout );

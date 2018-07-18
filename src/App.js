@@ -7,13 +7,7 @@ import { SignalDetectionService } from "./services/SignalDetection";
 logger.log('main.js');
 
 const DEBUG_DEFAULT_CODE = [
-  189.81586904765,
-  380.28420238092,
-  591.84163095231,
-  1036.09701785712,
-  1266.62794642860,
-  1892.38363095244,
-  2117.92424404760
+  0.11071835714,0.08259338095,0.10016359523,0.30911060714,0.09569125595,0.51507855357,0.07772857142
 ];
 
 let App = {
@@ -23,9 +17,9 @@ let App = {
     let isReadyToSetUpNewCode = false;
 
     let auth = new Auth();
-    let servo = new Servo({pin: settings.servoPin});
-    let button = new Button({pin: settings.buttonPin});
-    let bluetooth = new Bluetooth({serialPort: settings.bluetoothSerial});
+    let servo = new Servo({pin: settings.pin.servoPin});
+    let button = new Button({pin: settings.pin.buttonPin});
+    let bluetooth = new Bluetooth({serialPort: settings.pin.bluetoothSerial});
 
     let signalDetectionService = new SignalDetectionService();
 
