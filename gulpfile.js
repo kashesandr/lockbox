@@ -209,7 +209,7 @@ gulp.task('deploy', function () {
   //   console.log('Current temperature is '+temp);
   // });
 
-  // TODO: move to settings or detect automatically
+  // TODO: move to settings
   let port = "/dev/cu.usbmodem1411";
   let filename = __dirname + '/dist/main.min.js';
 

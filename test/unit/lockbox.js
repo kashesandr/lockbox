@@ -1,4 +1,4 @@
-import { Auth } from '../../src/Auth';
+import { Auth } from '../../src/services/Auth';
 
 describe('Auth', () => {
 

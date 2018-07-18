@@ -13,9 +13,8 @@ import { settings } from './settings';
  */
 const Logger = class {
 
-  isEnabled: false;
-
   constructor (bluetoothSerial) {
+    this.isEnabled = false;
     this.bluetoothSerial = bluetoothSerial;
   }
 
