@@ -46,6 +46,7 @@ const Bluetooth = class {
 
   _onDataReceived(){
     let data = this.receivedDataArray.join("");
+    logger.log("Bluetooth._onDataReceoved", data);
     this.onDataReceivedCallback(data);
     this.receivedDataArray = [];
   }

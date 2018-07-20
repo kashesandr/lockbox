@@ -89,8 +89,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	  run: function run() {
 	
-	    var isReadyToSetUpNewCode = false;
-	
 	    var auth = new _Auth.Auth();
 	    var bluetooth = new _Devices.Bluetooth({ serialPort: _settings.settings.pin.bluetoothSerial });
 	    var relay = new _Devices.Relay({ pin: _settings.settings.pin.relayPin });
@@ -98,9 +96,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	    var signalDetectionService = new _SignalDetection.SignalDetectionService();
 	
-	    bluetooth.onDataReceived(function () {
-	      _logger.logger.log('ready to set up new code');
-	      isReadyToSetUpNewCode = true;
+	    var triggerRelay = function triggerRelay(relay) {
+	      var timeout = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 400;
+	
+	      relay.set(0);
+	      setTimeout(function () {
+	        relay.set(1);
+	      }, timeout);
+	    };
+	
+	    var isReadyToSetUpNewCode = false;
+	    bluetooth.onDataReceived(function (data) {
+	      if (data === "set") {
+	        isReadyToSetUpNewCode = true;
+	      }
+	      if (data === "open") {
+	        triggerRelay(relay);
+	      }
 	    });
 	
 	    knockDevice.onKnock(function (e) {
@@ -118,6 +130,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      _logger.logger.log('code-detected', code);
 	
 	      if (isReadyToSetUpNewCode) {
+	        // TODO: store new code in FlashEEPROM
+	        // TODO: details https://www.espruino.com/FlashEEPROM
 	        auth.setCode(code);
 	        _logger.logger.log('new code has been set');
 	        isReadyToSetUpNewCode = false;
@@ -126,10 +140,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _logger.logger.log('authenticated', authenticated);
 	
 	        if (authenticated) {
-	          relay.set(0);
-	          setTimeout(function () {
-	            relay.set(1);
-	          }, 400);
+	          triggerRelay(relay);
 	        }
 	      }
 	    });
@@ -370,6 +381,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: "_onDataReceived",
 	    value: function _onDataReceived() {
 	      var data = this.receivedDataArray.join("");
+	      _logger.logger.log("Bluetooth._onDataReceoved", data);
 	      this.onDataReceivedCallback(data);
 	      this.receivedDataArray = [];
 	    }

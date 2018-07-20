@@ -14,8 +14,6 @@ let App = {
 
   run: () => {
 
-    let isReadyToSetUpNewCode = false;
-
     let auth = new Auth();
     let bluetooth = new Bluetooth({serialPort: settings.pin.bluetoothSerial});
     let relay = new Relay({pin: settings.pin.relayPin});
@@ -23,9 +21,21 @@ let App = {
 
     let signalDetectionService = new SignalDetectionService();
 
-    bluetooth.onDataReceived( () => {
-      logger.log('ready to set up new code');
-      isReadyToSetUpNewCode = true;
+    let triggerRelay = (relay, timeout = 400) => {
+      relay.set(0);
+      setTimeout((()=>{
+        relay.set(1)
+      }), timeout);
+    };
+
+    let isReadyToSetUpNewCode = false;
+    bluetooth.onDataReceived( (data) => {
+      if (data === "set") {
+        isReadyToSetUpNewCode = true;
+      }
+      if (data === "open") {
+        triggerRelay(relay);
+      }
     });
 
     knockDevice.onKnock((e) => {
@@ -43,6 +53,8 @@ let App = {
       logger.log('code-detected', code);
 
       if (isReadyToSetUpNewCode) {
+        // TODO: store new code in FlashEEPROM
+        // TODO: details https://www.espruino.com/FlashEEPROM
         auth.setCode(code);
         logger.log('new code has been set');
         isReadyToSetUpNewCode = false;
@@ -51,10 +63,7 @@ let App = {
         logger.log('authenticated', authenticated);
 
         if (authenticated) {
-          relay.set(0);
-          setTimeout((()=>{
-            relay.set(1)
-          }), 400)
+          triggerRelay(relay);
         }
 
       }
