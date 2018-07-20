@@ -1,7 +1,7 @@
 import { Auth } from "./services/Auth";
 import { logger } from "./logger";
 import { settings } from "./settings";
-import { Button, Bluetooth, Relay } from "./Devices";
+import { Bluetooth, Relay, KnockDevice } from "./Devices";
 import { SignalDetectionService } from "./services/SignalDetection";
 
 logger.log('main.js');
@@ -17,9 +17,9 @@ let App = {
     let isReadyToSetUpNewCode = false;
 
     let auth = new Auth();
-    let button = new Button({pin: settings.pin.buttonPin});
     let bluetooth = new Bluetooth({serialPort: settings.pin.bluetoothSerial});
     let relay = new Relay({pin: settings.pin.relayPin});
+    let knockDevice = new KnockDevice({pin: settings.pin.knockPin});
 
     let signalDetectionService = new SignalDetectionService();
 
@@ -28,7 +28,7 @@ let App = {
       isReadyToSetUpNewCode = true;
     });
 
-    button.onClick((e) => {
+    knockDevice.onKnock((e) => {
       // todo: generate timestamp based on `e` arg
       // there is a mistake (e.time - e.lastTime) -> fix it
       let timestamp = e.time - e.lastTime;

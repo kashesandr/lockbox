@@ -92,9 +92,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var isReadyToSetUpNewCode = false;
 	
 	    var auth = new _Auth.Auth();
-	    var button = new _Devices.Button({ pin: _settings.settings.pin.buttonPin });
 	    var bluetooth = new _Devices.Bluetooth({ serialPort: _settings.settings.pin.bluetoothSerial });
 	    var relay = new _Devices.Relay({ pin: _settings.settings.pin.relayPin });
+	    var knockDevice = new _Devices.KnockDevice({ pin: _settings.settings.pin.knockPin });
 	
 	    var signalDetectionService = new _SignalDetection.SignalDetectionService();
 	
@@ -103,7 +103,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      isReadyToSetUpNewCode = true;
 	    });
 	
-	    button.onClick(function (e) {
+	    knockDevice.onKnock(function (e) {
 	      // todo: generate timestamp based on `e` arg
 	      // there is a mistake (e.time - e.lastTime) -> fix it
 	      var timestamp = e.time - e.lastTime;
@@ -292,7 +292,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var settings = {
 	  pin: {
-	    buttonPin: P2,
+	    knockPin: P2,
 	    relayPin: P3,
 	    bluetoothSerial: Serial3
 	  }
@@ -309,31 +309,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.Relay = exports.Bluetooth = exports.Button = exports.Servo = undefined;
+	exports.KnockDevice = exports.Relay = exports.Bluetooth = undefined;
 	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Servo motor utility module
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * example:
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      *
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       ```
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         import { Servo } from "./Devices";
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         let options = {
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           pin: <Object>, // e,g, P1
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         };
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         let servo = new Servo(options);
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         s.move(1); // moving to position 1 over 1 second
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         s.move(0); // moving to position 0 over 1 second
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         s.move(0.5, 3000); // moving to position 0.5 over 3 seconds
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         // moving to position 0 over 1 second, then move to position 1
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         s.move(0, 1000, function() {
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           s.move(1, 1000);
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         });
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       ```
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      *
-	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     */
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
 	var _logger = __webpack_require__(3);
 	
@@ -342,105 +320,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	_logger.logger.log('Devices.js');
-	
-	var SERVO_DEFAULT_DURATION = 1000;
-	var SERVO_DEFAULT_INTERVAL = 20;
-	
-	// TODO: remove since it is deprecated
-	var Servo = function () {
-	  function Servo(options) {
-	    _classCallCheck(this, Servo);
-	
-	    this.pin = options.pin;
-	    this.currentInterval = null;
-	    this.currentPosition = null;
-	    if (options && options.range) {
-	      this.range = options.range;
-	      this.offset = 1.5 - options.range / 2;
-	    } else {
-	      this.offset = 1;
-	      this.range = 1;
-	    }
-	  }
-	
-	  _createClass(Servo, [{
-	    key: "move",
-	    value: function move(position, duration, cb) {
-	      var _this = this;
-	
-	      if (!duration) duration = SERVO_DEFAULT_DURATION;
-	      if (!this.currentPosition) this.currentPosition = position;
-	      if (this.currentInterval) clearInterval(this.currentInterval);
-	
-	      var initialPosition = this.currentPosition;
-	      var amt = 0;
-	
-	      var moveFn = function moveFn() {
-	
-	        if (amt > 1) {
-	          clearInterval(_this.currentInterval);
-	          delete _this.currentInterval;
-	          amt = 1;
-	          if (cb) cb();
-	        }
-	        _this.currentPosition = position * amt + initialPosition * (1 - amt);
-	        digitalPulse(_this.pin, 1, _this.offset + E.clip(_this.currentPosition, 0, 1) * _this.range);
-	        amt += 1000.0 / (SERVO_DEFAULT_INTERVAL * duration);
-	      };
-	
-	      this.currentInterval = setInterval(moveFn, SERVO_DEFAULT_INTERVAL);
-	    }
-	  }]);
-	
-	  return Servo;
-	}();
-	
-	/**
-	 * Button module
-	 * example: 
-	 *
-	  ```
-	    import { Button } from "./Devices";
-	    let options = {
-	      pin: <Object>, // e,g, P1
-	      setWatchOpts: <Object> // opts passed to setWatch fn
-	    };
-	    let btn = new Button(options);
-	 ```
-	 * 
-	 */
-	
-	var SET_WATCH_OPTS_DEFAULT = {
-	  repeat: true,
-	  debounce: 20,
-	  edge: 'rising'
-	};
-	
-	var Button = function () {
-	  function Button(options) {
-	    _classCallCheck(this, Button);
-	
-	    _logger.logger.log("setupButton");
-	    var pin = options.pin;
-	    var setWatchOpts = options.setWatchOpts || SET_WATCH_OPTS_DEFAULT;
-	    setWatch(this.btnClick.bind(this), pin, setWatchOpts);
-	  }
-	
-	  _createClass(Button, [{
-	    key: "btnClick",
-	    value: function btnClick(e) {
-	      _logger.logger.log("setupButton btnClick");
-	      this.btnClickCallback(e);
-	    }
-	  }, {
-	    key: "onClick",
-	    value: function onClick(callback) {
-	      this.btnClickCallback = callback || function () {};
-	    }
-	  }]);
-	
-	  return Button;
-	}();
 	
 	/**
 	 * Bluetooth module
@@ -462,7 +341,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var Bluetooth = function () {
 	  function Bluetooth(options) {
-	    var _this2 = this;
+	    var _this = this;
 	
 	    _classCallCheck(this, Bluetooth);
 	
@@ -475,7 +354,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.onDataReceivedCallback = function () {};
 	
 	    this.onDataReceivedDebounced = (0, _Utils.debounce)(function () {
-	      _this2._onDataReceived();
+	      _this._onDataReceived();
 	    }, debouceTimeout);
 	
 	    serial.on('data', this.onDataReceiving.bind(this));
@@ -505,6 +384,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	}();
 	
 	/**
+	 * Relay utility module
+	 * example:
+	 *
+	
+	 ```
+	  import { Relay } from "./Devices";
+	  let options = {
+	    pin: <Object>, // e,g, P1
+	  };
+	  let relay = new Relay(options);
+	
+	  relay.set(1);
+	  relay.set(true);
+	  relay.set(0);
+	  relay.set(false);
+	
+	 ```
 	 *
 	 */
 	
@@ -525,10 +421,60 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return Relay;
 	}();
 	
-	exports.Servo = Servo;
-	exports.Button = Button;
+	/**
+	 * KnockDevice module
+	 * example:
+	 *
+	 ```
+	 import { KnockDevice } from "./Devices";
+	 let options = {
+	      pin: <Object>, // e,g, P1
+	      setWatchOpts: <Object> // opts passed to setWatch fn
+	    };
+	 let knockDevice = new KnockDevice(options);
+	 knockDevice.onKnock((e)=>{
+	  // callback when knock
+	 });
+	 ```
+	 *
+	 */
+	
+	var SET_WATCH_OPTS_DEFAULT = {
+	  repeat: true,
+	  debounce: 25,
+	  edge: 'rising'
+	};
+	
+	var KnockDevice = function () {
+	  function KnockDevice(options) {
+	    _classCallCheck(this, KnockDevice);
+	
+	    _logger.logger.log("setup KnockDevice");
+	    var pin = options.pin;
+	    var setWatchOpts = options.setWatchOpts || SET_WATCH_OPTS_DEFAULT;
+	    this.onKnockCallback = function () {};
+	    setWatch(this.onShakeEvent.bind(this), pin, setWatchOpts);
+	  }
+	
+	  _createClass(KnockDevice, [{
+	    key: "onShakeEvent",
+	    value: function onShakeEvent(e) {
+	      _logger.logger.log("KnockDevice onShakeEvent");
+	      this.onKnockCallback(e);
+	    }
+	  }, {
+	    key: "onKnock",
+	    value: function onKnock(callback) {
+	      this.onKnockCallback = callback || function () {};
+	    }
+	  }]);
+	
+	  return KnockDevice;
+	}();
+	
 	exports.Bluetooth = Bluetooth;
 	exports.Relay = Relay;
+	exports.KnockDevice = KnockDevice;
 
 /***/ },
 /* 6 */

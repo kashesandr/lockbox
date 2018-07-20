@@ -7,7 +7,7 @@
 
 const settings = {
   pin: {
-    buttonPin: P2,
+    knockPin: P2,
     relayPin: P3,
     bluetoothSerial: Serial3
   }
