@@ -30,6 +30,7 @@ logger.log('Devices.js');
 const SERVO_DEFAULT_DURATION = 1000;
 const SERVO_DEFAULT_INTERVAL = 20;
 
+// TODO: remove since it is deprecated
 const Servo = class {
 
   constructor(options) {
@@ -167,5 +168,21 @@ const Bluetooth = class {
   }
 
 };
-  
-export { Servo, Button, Bluetooth };
+
+/**
+ *
+ */
+
+const Relay = class {
+
+  constructor(options){
+    this.pin = options.pin;
+  }
+
+  set(bool){
+    this.pin.write(bool ? 1 : 0);
+  }
+
+};
+
+export { Servo, Button, Bluetooth, Relay };

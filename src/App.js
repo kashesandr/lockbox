@@ -1,7 +1,7 @@
 import { Auth } from "./services/Auth";
 import { logger } from "./logger";
 import { settings } from "./settings";
-import { Servo, Button, Bluetooth } from "./Devices";
+import { Button, Bluetooth, Relay } from "./Devices";
 import { SignalDetectionService } from "./services/SignalDetection";
 
 logger.log('main.js');
@@ -17,9 +17,9 @@ let App = {
     let isReadyToSetUpNewCode = false;
 
     let auth = new Auth();
-    let servo = new Servo({pin: settings.pin.servoPin});
     let button = new Button({pin: settings.pin.buttonPin});
     let bluetooth = new Bluetooth({serialPort: settings.pin.bluetoothSerial});
+    let relay = new Relay({pin: settings.pin.relayPin});
 
     let signalDetectionService = new SignalDetectionService();
 
@@ -49,7 +49,14 @@ let App = {
       } else {
         let authenticated = auth.verifyCode(code);
         logger.log('authenticated', authenticated);
-        servo.move(authenticated ? 0 : 1);
+
+        if (authenticated) {
+          relay.set(0);
+          setTimeout((()=>{
+            relay.set(1)
+          }), 400)
+        }
+
       }
     });
 

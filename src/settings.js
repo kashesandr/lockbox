@@ -8,7 +8,7 @@
 const settings = {
   pin: {
     buttonPin: P2,
-    servoPin: P3,
+    relayPin: P3,
     bluetoothSerial: Serial3
   }
 };

@@ -92,9 +92,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var isReadyToSetUpNewCode = false;
 	
 	    var auth = new _Auth.Auth();
-	    var servo = new _Devices.Servo({ pin: _settings.settings.pin.servoPin });
 	    var button = new _Devices.Button({ pin: _settings.settings.pin.buttonPin });
 	    var bluetooth = new _Devices.Bluetooth({ serialPort: _settings.settings.pin.bluetoothSerial });
+	    var relay = new _Devices.Relay({ pin: _settings.settings.pin.relayPin });
 	
 	    var signalDetectionService = new _SignalDetection.SignalDetectionService();
 	
@@ -124,7 +124,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	      } else {
 	        var authenticated = auth.verifyCode(code);
 	        _logger.logger.log('authenticated', authenticated);
-	        servo.move(authenticated ? 0 : 1);
+	
+	        if (authenticated) {
+	          relay.set(0);
+	          setTimeout(function () {
+	            relay.set(1);
+	          }, 400);
+	        }
 	      }
 	    });
 	  }
@@ -287,7 +293,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var settings = {
 	  pin: {
 	    buttonPin: P2,
-	    servoPin: P3,
+	    relayPin: P3,
 	    bluetoothSerial: Serial3
 	  }
 	};
@@ -303,7 +309,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.Bluetooth = exports.Button = exports.Servo = undefined;
+	exports.Relay = exports.Bluetooth = exports.Button = exports.Servo = undefined;
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
 	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Servo motor utility module
@@ -340,6 +346,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var SERVO_DEFAULT_DURATION = 1000;
 	var SERVO_DEFAULT_INTERVAL = 20;
 	
+	// TODO: remove since it is deprecated
 	var Servo = function () {
 	  function Servo(options) {
 	    _classCallCheck(this, Servo);
@@ -497,9 +504,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	  return Bluetooth;
 	}();
 	
+	/**
+	 *
+	 */
+	
+	var Relay = function () {
+	  function Relay(options) {
+	    _classCallCheck(this, Relay);
+	
+	    this.pin = options.pin;
+	  }
+	
+	  _createClass(Relay, [{
+	    key: "set",
+	    value: function set(bool) {
+	      this.pin.write(bool ? 1 : 0);
+	    }
+	  }]);
+	
+	  return Relay;
+	}();
+	
 	exports.Servo = Servo;
 	exports.Button = Button;
 	exports.Bluetooth = Bluetooth;
+	exports.Relay = Relay;
 
 /***/ },
 /* 6 */
