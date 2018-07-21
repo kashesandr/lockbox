@@ -35,7 +35,6 @@ const SignalDetectionService = class {
   }
 
   /**
-   * todo: define input, modify the `e` variable taken from espruino's `setWatch` fn
    * @param timestamp
    */
   putTimestamp (timestamp) {

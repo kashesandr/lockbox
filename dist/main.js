@@ -116,7 +116,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    });
 	
 	    knockDevice.onKnock(function (e) {
-	      // todo: generate timestamp based on `e` arg
 	      // there is a mistake (e.time - e.lastTime) -> fix it
 	      var timestamp = e.time - e.lastTime;
 	      signalDetectionService.putTimestamp(timestamp);
@@ -451,27 +450,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	 *
 	 */
 	
-	var SET_WATCH_OPTS_DEFAULT = {
+	var KNOCK_DEVICE_SET_WATCH_OPTS_DEFAULT = {
 	  repeat: true,
-	  debounce: 25,
+	  debounce: 20,
 	  edge: 'rising'
 	};
+	var KNOCK_DEVICE_DEBOUNCE = 100;
 	
 	var KnockDevice = function () {
 	  function KnockDevice(options) {
+	    var _this2 = this;
+	
 	    _classCallCheck(this, KnockDevice);
 	
 	    _logger.logger.log("setup KnockDevice");
 	    var pin = options.pin;
-	    var setWatchOpts = options.setWatchOpts || SET_WATCH_OPTS_DEFAULT;
+	    var setWatchOpts = options.setWatchOpts || KNOCK_DEVICE_SET_WATCH_OPTS_DEFAULT;
 	    this.onKnockCallback = function () {};
-	    setWatch(this.onShakeEvent.bind(this), pin, setWatchOpts);
+	
+	    // here we use KNOCK_DEVICE_DEBOUNCE
+	    // in order to catch only first knocking
+	    var shakeTimeout = void 0;
+	    var watcher = function watcher(e) {
+	      if (shakeTimeout) return;
+	      _this2.onKnockEvent(e);
+	      shakeTimeout = setTimeout(function () {
+	        shakeTimeout = undefined;
+	      }, KNOCK_DEVICE_DEBOUNCE);
+	    };
+	
+	    setWatch(watcher, pin, setWatchOpts);
 	  }
 	
 	  _createClass(KnockDevice, [{
-	    key: "onShakeEvent",
-	    value: function onShakeEvent(e) {
-	      _logger.logger.log("KnockDevice onShakeEvent");
+	    key: "onKnockEvent",
+	    value: function onKnockEvent(e) {
+	      _logger.logger.log("KnockDevice onKnockEvent");
 	      this.onKnockCallback(e);
 	    }
 	  }, {
@@ -565,7 +579,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	
 	    /**
-	     * todo: define input, modify the `e` variable taken from espruino's `setWatch` fn
 	     * @param timestamp
 	     */
 	

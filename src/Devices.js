@@ -108,24 +108,39 @@ const Relay = class {
  *
  */
 
-const SET_WATCH_OPTS_DEFAULT = {
+const KNOCK_DEVICE_SET_WATCH_OPTS_DEFAULT = {
   repeat: true,
-  debounce: 25,
+  debounce: 20,
   edge: 'rising'
 };
+const KNOCK_DEVICE_DEBOUNCE = 100;
 
 const KnockDevice = class {
 
   constructor(options) {
     logger.log("setup KnockDevice");
     let pin = options.pin;
-    let setWatchOpts = options.setWatchOpts || SET_WATCH_OPTS_DEFAULT;
+    let setWatchOpts = options.setWatchOpts || KNOCK_DEVICE_SET_WATCH_OPTS_DEFAULT;
     this.onKnockCallback = (()=>{});
-    setWatch(this.onShakeEvent.bind(this), pin, setWatchOpts);
+
+    // here we use KNOCK_DEVICE_DEBOUNCE
+    // in order to catch only first knocking
+    let shakeTimeout;
+    let watcher = (e) => {
+      if (shakeTimeout) return;
+      this.onKnockEvent(e);
+      shakeTimeout = setTimeout(
+        () => { shakeTimeout = undefined; }
+        , KNOCK_DEVICE_DEBOUNCE
+      );
+    };
+
+    setWatch(watcher, pin, setWatchOpts);
+
   }
 
-  onShakeEvent(e) {
-    logger.log("KnockDevice onShakeEvent");
+  onKnockEvent(e) {
+    logger.log("KnockDevice onKnockEvent");
     this.onKnockCallback(e);
   }
 

@@ -39,7 +39,6 @@ let App = {
     });
 
     knockDevice.onKnock((e) => {
-      // todo: generate timestamp based on `e` arg
       // there is a mistake (e.time - e.lastTime) -> fix it
       let timestamp = e.time - e.lastTime;
       signalDetectionService.putTimestamp(timestamp);
