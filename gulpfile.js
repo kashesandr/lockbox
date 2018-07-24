@@ -73,9 +73,9 @@ function build() {
     .pipe(gulp.dest(destinationFolder))
     .pipe($.filter(['**', '!**/*.js.map']))
     .pipe($.rename(`${exportFileName}.min.js`))
-    .pipe($.sourcemaps.init({loadMaps: true}))
+    // .pipe($.sourcemaps.init({loadMaps: true}))
     .pipe($.uglify())
-    .pipe($.sourcemaps.write('./'))
+    // .pipe($.sourcemaps.write('./'))
     .pipe(gulp.dest(destinationFolder));
 }
 

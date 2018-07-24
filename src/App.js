@@ -7,7 +7,7 @@ import { SignalDetectionService } from "./services/SignalDetection";
 logger.log('main.js');
 
 const DEBUG_DEFAULT_CODE = [
-  0.11071835714,0.08259338095,0.10016359523,0.30911060714,0.09569125595,0.51507855357,0.07772857142
+  352.18447023809,523.22069642856,955.59352380951,1151.93428571428,1838.82752380952,2025.70342857142
 ];
 
 let App = {
@@ -38,10 +38,19 @@ let App = {
       }
     });
 
+    let isFirstPress = true;
+    let firstPressTimestamp = 0;
     knockDevice.onKnock((e) => {
-      // there is a mistake (e.time - e.lastTime) -> fix it
-      let timestamp = e.time - e.lastTime;
-      signalDetectionService.putTimestamp(timestamp);
+
+      if (isFirstPress) {
+        firstPressTimestamp = (new Date()).getTime();
+        isFirstPress = false;
+      } else {
+        let timestamp = (new Date()).getTime();
+        let deltaTime = timestamp - firstPressTimestamp;
+        signalDetectionService.putTimestamp(deltaTime);
+      }
+
     });
 
     // TODO: set the code manually
@@ -58,12 +67,16 @@ let App = {
         logger.log('new code has been set');
         isReadyToSetUpNewCode = false;
       } else {
+
         let authenticated = auth.verifyCode(code);
         logger.log('authenticated', authenticated);
 
         if (authenticated) {
           triggerRelay(relay);
         }
+
+        isFirstPress = true;
+        firstPressTimestamp = 0;
 
       }
     });

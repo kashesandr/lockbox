@@ -2,11 +2,14 @@ import {logger} from "./../logger";
 
 logger.log('Auth.js');
 
+const DEFAULT_FLUCTUATION = 0.05;
+const FLUCTUATION_SHIFT = 0.01;
+
 const Auth = class {
 
   constructor() {
     this.code = []; // storing key code, an array of timestamps
-    this.fluctuation = 150; // TODO: must be in percents
+    this.fluctuationPct = DEFAULT_FLUCTUATION; 
   }
 
   setCode(code){
@@ -27,16 +30,28 @@ const Auth = class {
     const [codeEnd] = this.code.slice(-1);
 
     let coeff = signalEnd/codeEnd;
+    let fluctuation = +(signalEnd * this.fluctuationPct + FLUCTUATION_SHIFT).toFixed(2);
+
     let result = true;
-    let fluctuation = this.fluctuation;
+
     this.code.forEach( (codeItem, index) => {
-      let stamp = code[index]/coeff;
-      let withinRange = ((stamp + fluctuation) >= codeItem && (stamp - fluctuation) <= codeItem);
-      if (!withinRange)
-        result = false;
+      let codeItemNormalized = +(codeItem*coeff).toFixed(2);
+      let signalItem = code[index];
+
+      let gt = +(parseFloat(codeItemNormalized + fluctuation )).toFixed(2);
+      let lt = +(parseFloat(codeItemNormalized - fluctuation )).toFixed(2);
+
+      let withinRange = gt >= signalItem && lt <= signalItem;
+
+      if (!withinRange) result = false;
     } );
 
+    logger.log("Auth.verifyCode", result);
     return result;
+  }
+
+  setFluctuation(val){
+    this.fluctuationPct = val || DEFAULT_FLUCTUATION;
   }
 
 };

@@ -83,7 +83,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	_logger.logger.log('main.js');
 	
-	var DEBUG_DEFAULT_CODE = [0.11071835714, 0.08259338095, 0.10016359523, 0.30911060714, 0.09569125595, 0.51507855357, 0.07772857142];
+	var DEBUG_DEFAULT_CODE = [352.18447023809, 523.22069642856, 955.59352380951, 1151.93428571428, 1838.82752380952, 2025.70342857142];
 	
 	var App = {
 	
@@ -115,10 +115,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 	    });
 	
+	    var isFirstPress = true;
+	    var firstPressTimestamp = 0;
 	    knockDevice.onKnock(function (e) {
-	      // there is a mistake (e.time - e.lastTime) -> fix it
-	      var timestamp = e.time - e.lastTime;
-	      signalDetectionService.putTimestamp(timestamp);
+	
+	      if (isFirstPress) {
+	        firstPressTimestamp = new Date().getTime();
+	        isFirstPress = false;
+	      } else {
+	        var timestamp = new Date().getTime();
+	        var deltaTime = timestamp - firstPressTimestamp;
+	        signalDetectionService.putTimestamp(deltaTime);
+	      }
 	    });
 	
 	    // TODO: set the code manually
@@ -135,12 +143,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _logger.logger.log('new code has been set');
 	        isReadyToSetUpNewCode = false;
 	      } else {
+	
 	        var authenticated = auth.verifyCode(code);
 	        _logger.logger.log('authenticated', authenticated);
 	
 	        if (authenticated) {
 	          triggerRelay(relay);
 	        }
+	
+	        isFirstPress = true;
+	        firstPressTimestamp = 0;
 	      }
 	    });
 	  }
@@ -170,12 +182,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	_logger.logger.log('Auth.js');
 	
+	var DEFAULT_FLUCTUATION = 0.05;
+	var FLUCTUATION_SHIFT = 0.01;
+	
 	var Auth = function () {
 	  function Auth() {
 	    _classCallCheck(this, Auth);
 	
 	    this.code = []; // storing key code, an array of timestamps
-	    this.fluctuation = 150; // TODO: must be in percents
+	    this.fluctuationPct = DEFAULT_FLUCTUATION;
 	  }
 	
 	  _createClass(Auth, [{
@@ -206,15 +221,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	          codeEnd = _code$slice4[0];
 	
 	      var coeff = signalEnd / codeEnd;
+	      var fluctuation = +(signalEnd * this.fluctuationPct + FLUCTUATION_SHIFT).toFixed(2);
+	
 	      var result = true;
-	      var fluctuation = this.fluctuation;
+	
 	      this.code.forEach(function (codeItem, index) {
-	        var stamp = code[index] / coeff;
-	        var withinRange = stamp + fluctuation >= codeItem && stamp - fluctuation <= codeItem;
+	        var codeItemNormalized = +(codeItem * coeff).toFixed(2);
+	        var signalItem = code[index];
+	
+	        var gt = +parseFloat(codeItemNormalized + fluctuation).toFixed(2);
+	        var lt = +parseFloat(codeItemNormalized - fluctuation).toFixed(2);
+	
+	        var withinRange = gt >= signalItem && lt <= signalItem;
+	
 	        if (!withinRange) result = false;
 	      });
 	
+	      _logger.logger.log("Auth.verifyCode", result);
 	      return result;
+	    }
+	  }, {
+	    key: "setFluctuation",
+	    value: function setFluctuation(val) {
+	      this.fluctuationPct = val || DEFAULT_FLUCTUATION;
 	    }
 	  }]);
 	
@@ -280,7 +309,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var logger = new Logger(_settings.settings.pin.bluetoothSerial);
 	
 	// TODO: enable when debugging
-	//logger.enabled(true);
+	logger.enabled(true);
 	
 	exports.logger = logger;
 
@@ -296,7 +325,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	// mocking for testing
 	// TODO: do not include in prod
-	// let BTN1 = BTN1 || null;
+	// let P2 = P2 || null;
 	// let P3 = P3 || null;
 	// let Serial3 = Serial3 || null;
 	

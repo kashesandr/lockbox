@@ -49,16 +49,4 @@ describe('SignalDetectionService', () => {
 
   });
 
-  xit('`onCodeDetected` fires an event that contains timestamps', () => {
-    let spy = sinon.spy(service, '<???>');
-    service.putTimestamp();
-    service.putTimestamp(200);
-    service.putTimestamp(400);
-    service.onCodeDetected();
-  });
-
-  xit('', () => {} );
-
-  xit('', () => {} );
-
 });
