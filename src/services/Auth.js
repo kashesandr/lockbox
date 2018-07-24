@@ -51,6 +51,7 @@ const Auth = class {
   }
 
   setFluctuation(val){
+    logger.log("Auth.setFluctuation", val);
     this.fluctuationPct = val || DEFAULT_FLUCTUATION;
   }
 

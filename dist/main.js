@@ -109,9 +109,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	    bluetooth.onDataReceived(function (data) {
 	      if (data === "set") {
 	        isReadyToSetUpNewCode = true;
-	      }
-	      if (data === "open") {
+	      } else if (data === "open") {
 	        triggerRelay(relay);
+	      } else {
+	        if (data.indexOf('fluctuation ') !== -1) {
+	          var val = parseFloat(data.split(' ')[1]) || 0.05;
+	          auth.setFluctuation(val);
+	        }
 	      }
 	    });
 	
@@ -150,10 +154,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (authenticated) {
 	          triggerRelay(relay);
 	        }
-	
-	        isFirstPress = true;
-	        firstPressTimestamp = 0;
 	      }
+	
+	      isFirstPress = true;
+	      firstPressTimestamp = 0;
 	    });
 	  }
 	
@@ -243,6 +247,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: "setFluctuation",
 	    value: function setFluctuation(val) {
+	      _logger.logger.log("Auth.setFluctuation", val);
 	      this.fluctuationPct = val || DEFAULT_FLUCTUATION;
 	    }
 	  }]);
@@ -309,7 +314,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var logger = new Logger(_settings.settings.pin.bluetoothSerial);
 	
 	// TODO: enable when debugging
-	logger.enabled(true);
+	//logger.enabled(true);
 	
 	exports.logger = logger;
 
@@ -586,6 +591,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 	
 	var CODE_DETECT_TIMEOUT_DEFAULT = 2000;
+	var SIGNALS_THRESHOLD = 30;
 	
 	var SignalDetectionService = function () {
 	  function SignalDetectionService() {
@@ -615,6 +621,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: "putTimestamp",
 	    value: function putTimestamp(timestamp) {
 	      _logger.logger.log('SignalDetectionService.putTimestamp()', timestamp);
+	      if (this.signalTimestamps.length > SIGNALS_THRESHOLD) return;
 	      if (this.signalDetectionInProgress) {
 	        this.signalTimestamps.push(timestamp);
 	      }

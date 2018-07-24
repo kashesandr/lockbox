@@ -32,9 +32,13 @@ let App = {
     bluetooth.onDataReceived( (data) => {
       if (data === "set") {
         isReadyToSetUpNewCode = true;
-      }
-      if (data === "open") {
+      } else if (data === "open") {
         triggerRelay(relay);
+      } else {
+        if (data.indexOf('fluctuation ') !== -1) {
+          let val = parseFloat(data.split(' ')[1]) || 0.05;
+          auth.setFluctuation(val);
+        }
       }
     });
 
@@ -75,10 +79,11 @@ let App = {
           triggerRelay(relay);
         }
 
-        isFirstPress = true;
-        firstPressTimestamp = 0;
-
       }
+
+      isFirstPress = true;
+      firstPressTimestamp = 0;
+
     });
 
   }

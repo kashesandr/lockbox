@@ -10,6 +10,7 @@ logger.log('signal-detection.js', 'loaded');
  */
 
 const CODE_DETECT_TIMEOUT_DEFAULT = 2000;
+const SIGNALS_THRESHOLD = 30;
 
 const SignalDetectionService = class {
 
@@ -39,6 +40,8 @@ const SignalDetectionService = class {
    */
   putTimestamp (timestamp) {
     logger.log('SignalDetectionService.putTimestamp()', timestamp);
+    if (this.signalTimestamps.length > SIGNALS_THRESHOLD)
+      return;
     if (this.signalDetectionInProgress) {
       this.signalTimestamps.push(timestamp);
     }
